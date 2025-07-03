@@ -10,19 +10,21 @@ export default class KeyStore {
 
     let totalWeight = 0
 
-    keys.forEach((key) => {
+    for (let i = 0, len = keys.length; i < len; i += 1) {
+      const key = keys[i]
       let obj = createKey(key)
 
       this._keys.push(obj)
       this._keyMap[obj.id] = obj
 
       totalWeight += obj.weight
-    })
+    }
 
     // Normalize weights so that their sum is equal to 1
-    this._keys.forEach((key) => {
+    for (let i = 0, len = this._keys.length; i < len; i += 1) {
+      const key = this._keys[i]
       key.weight /= totalWeight
-    })
+    }
   }
   get(keyId) {
     return this._keyMap[keyId]
@@ -48,7 +50,7 @@ export function createKey(key) {
     id = createKeyId(key)
   } else {
     if (!hasOwn.call(key, 'name')) {
-      throw new Error(ErrorMsg.MISSING_KEY_PROPERTY('name'))
+      throw ErrorMsg.DOM_EXCEPTION(ErrorMsg.MISSING_KEY_PROPERTY('name'))
     }
 
     const name = key.name
@@ -58,7 +60,7 @@ export function createKey(key) {
       weight = key.weight
 
       if (weight <= 0) {
-        throw new Error(ErrorMsg.INVALID_KEY_WEIGHT_VALUE(name))
+        throw ErrorMsg.DOM_EXCEPTION(ErrorMsg.INVALID_KEY_WEIGHT_VALUE(name))
       }
     }
 

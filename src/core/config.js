@@ -61,9 +61,15 @@ export const AdvancedOptions = {
   fieldNormWeight: 1
 }
 
+export const ControllerOptions = {
+  // The AbortController to use for aborting searches.
+  abortController: new AbortController()
+}
+
 export default {
   ...BasicOptions,
   ...MatchOptions,
   ...FuzzyOptions,
-  ...AdvancedOptions
+  ...AdvancedOptions,
+  ...ControllerOptions,
 }

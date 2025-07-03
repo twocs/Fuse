@@ -15,7 +15,8 @@ export default function search(
     findAllMatches = Config.findAllMatches,
     minMatchCharLength = Config.minMatchCharLength,
     includeMatches = Config.includeMatches,
-    ignoreLocation = Config.ignoreLocation
+    ignoreLocation = Config.ignoreLocation,
+    abortController = Config.abortController,
   } = {}
 ) {
   if (pattern.length > MAX_BITS) {
@@ -42,6 +43,10 @@ export default function search(
 
   // Get all exact matches, here for speed up
   while ((index = text.indexOf(pattern, bestLocation)) > -1) {
+    if (abortController?.signal?.aborted) {
+      throw ErrorMsg.DOM_EXCEPTION(ErrorMsg.SEARCH_ABORTED)
+    }
+
     let score = computeScore(pattern, {
       currentLocation: index,
       expectedLocation,
@@ -71,6 +76,10 @@ export default function search(
   const mask = 1 << (patternLen - 1)
 
   for (let i = 0; i < patternLen; i += 1) {
+    if (abortController?.signal?.aborted) {
+      throw ErrorMsg.DOM_EXCEPTION(ErrorMsg.SEARCH_ABORTED)
+    }
+
     // Scan for the best match; each iteration allows for one more error.
     // Run a binary search to determine how far from the match location we can stray
     // at this error level.
@@ -78,6 +87,10 @@ export default function search(
     let binMid = binMax
 
     while (binMin < binMid) {
+      if (abortController?.signal?.aborted) {
+        throw ErrorMsg.DOM_EXCEPTION(ErrorMsg.SEARCH_ABORTED)
+      }
+
       const score = computeScore(pattern, {
         errors: i,
         currentLocation: expectedLocation + binMid,
@@ -109,6 +122,10 @@ export default function search(
     bitArr[finish + 1] = (1 << i) - 1
 
     for (let j = finish; j >= start; j -= 1) {
+      if (abortController?.signal?.aborted) {
+        throw ErrorMsg.DOM_EXCEPTION(ErrorMsg.SEARCH_ABORTED)
+      }
+
       let currentLocation = j - 1
       let charMatch = patternAlphabet[text.charAt(currentLocation)]
 

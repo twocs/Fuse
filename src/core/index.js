@@ -16,7 +16,7 @@ export default class Fuse {
       this.options.useExtendedSearch &&
       !process.env.EXTENDED_SEARCH_ENABLED
     ) {
-      throw new Error(ErrorMsg.EXTENDED_SEARCH_UNAVAILABLE)
+      throw ErrorMsg.DOM_EXCEPTION(ErrorMsg.EXTENDED_SEARCH_UNAVAILABLE)
     }
 
     this._keyStore = new KeyStore(this.options.keys)
@@ -28,7 +28,7 @@ export default class Fuse {
     this._docs = docs
 
     if (index && !(index instanceof FuseIndex)) {
-      throw new Error(ErrorMsg.INCORRECT_INDEX_TYPE)
+      throw ErrorMsg.DOM_EXCEPTION(ErrorMsg.INCORRECT_INDEX_TYPE)
     }
 
     this._myIndex =
@@ -52,6 +52,10 @@ export default class Fuse {
     const results = []
 
     for (let i = 0, len = this._docs.length; i < len; i += 1) {
+      if (this.signal.aborted) {
+        throw ErrorMsg.DOM_EXCEPTION('FuseIndex._addObject aborted')
+      }
+
       const doc = this._docs[i]
       if (predicate(doc, i)) {
         this.removeAt(i)
@@ -111,9 +115,15 @@ export default class Fuse {
     const results = []
 
     // Iterate over every string in the index
-    records.forEach(({ v: text, i: idx, n: norm }) => {
+    for (let i = 0, len = records.length; i < len; i += 1) {
+      if (this?.options?.abortController?.signal?.aborted) {
+        throw ErrorMsg.DOM_EXCEPTION(ErrorMsg.SEARCH_ABORTED)
+      }
+      
+      const { v: text, i: idx, n: norm } = records[i]
+
       if (!isDefined(text)) {
-        return
+        continue
       }
 
       const { isMatch, score, indices } = searcher.searchIn(text)
@@ -125,14 +135,14 @@ export default class Fuse {
           matches: [{ score, value: text, norm, indices }]
         })
       }
-    })
+    }
 
     return results
   }
 
   _searchLogical(query) {
     if (!process.env.LOGICAL_SEARCH_ENABLED) {
-      throw new Error(ErrorMsg.LOGICAL_SEARCH_UNAVAILABLE)
+      throw ErrorMsg.DOM_EXCEPTION(ErrorMsg.LOGICAL_SEARCH_UNAVAILABLE)
     }
 
     const expression = parse(query, this.options)
@@ -162,6 +172,10 @@ export default class Fuse {
 
       const res = []
       for (let i = 0, len = node.children.length; i < len; i += 1) {
+        if (this?.options?.abortController?.signal?.aborted) {
+          throw ErrorMsg.DOM_EXCEPTION(ErrorMsg.SEARCH_ABORTED)
+        }
+
         const child = node.children[i]
         const result = evaluate(child, item, idx)
         if (result.length) {
@@ -177,7 +191,12 @@ export default class Fuse {
     const resultMap = {}
     const results = []
 
-    records.forEach(({ $: item, i: idx }) => {
+    
+    for (let idx = 0, len = records.length; idx < len; idx += 1) {
+      if (this?.options?.abortController?.signal?.aborted) {
+        throw ErrorMsg.DOM_EXCEPTION(ErrorMsg.SEARCH_ABORTED)
+      }
+      const item = records[idx].$
       if (isDefined(item)) {
         let expResults = evaluate(expression, item, idx)
 
@@ -187,12 +206,17 @@ export default class Fuse {
             resultMap[idx] = { idx, item, matches: [] }
             results.push(resultMap[idx])
           }
-          expResults.forEach(({ matches }) => {
+          for (let i = 0, len = expResults.length; i < len; i += 1) {
+            if (this?.options?.abortController?.signal?.aborted) {
+              throw ErrorMsg.DOM_EXCEPTION(ErrorMsg.SEARCH_ABORTED)
+            }
+
+            const { matches } = expResults[i]
             resultMap[idx].matches.push(...matches)
-          })
+          }
         }
       }
-    })
+    }
 
     return results
   }
@@ -203,7 +227,12 @@ export default class Fuse {
     const results = []
 
     // List is Array<Object>
-    records.forEach(({ $: item, i: idx }) => {
+    for (let idx = 0, len = keys.length; idx < len; idx += 1) {
+      if (this?.options?.abortController?.signal?.aborted) {
+        throw ErrorMsg.DOM_EXCEPTION(ErrorMsg.SEARCH_ABORTED)
+      }
+
+      const item = records[idx].$
       if (!isDefined(item)) {
         return
       }
@@ -211,7 +240,12 @@ export default class Fuse {
       let matches = []
 
       // Iterate over every key (i.e, path), and fetch the value at that key
-      keys.forEach((key, keyIndex) => {
+      for (let keyIndex = 0, keysLen = keys.length; keyIndex < keysLen; keyIndex += 1) {
+        if (this?.options?.abortController?.signal?.aborted) {
+          throw ErrorMsg.DOM_EXCEPTION(ErrorMsg.SEARCH_ABORTED)
+        }
+
+        const key = keys[keyIndex].id
         matches.push(
           ...this._findMatches({
             key,
@@ -219,7 +253,7 @@ export default class Fuse {
             searcher
           })
         )
-      })
+      }
 
       if (matches.length) {
         results.push({
@@ -228,7 +262,7 @@ export default class Fuse {
           matches
         })
       }
-    })
+    }
 
     return results
   }
@@ -240,7 +274,12 @@ export default class Fuse {
     let matches = []
 
     if (isArray(value)) {
-      value.forEach(({ v: text, i: idx, n: norm }) => {
+      for (let i = 0, len = value.length; i < len; i += 1) {
+        if (this.options.abortController?.signal?.aborted) {
+          throw ErrorMsg.DOM_EXCEPTION(ErrorMsg.SEARCH_ABORTED)
+        }
+
+        const { v: text, i: idx, n: norm } = value[i]
         if (!isDefined(text)) {
           return
         }
@@ -257,7 +296,7 @@ export default class Fuse {
             indices
           })
         }
-      })
+      }
     } else {
       const { v: text, n: norm } = value
 

@@ -14,3 +14,11 @@ export const MISSING_KEY_PROPERTY = (name) => `Missing ${name} property in key`
 
 export const INVALID_KEY_WEIGHT_VALUE = (key) =>
   `Property 'weight' in key '${key}' must be a positive integer`
+
+export const SEARCH_ABORTED = 'Search aborted'
+
+export const INDEXING_ABORTED = 'Indexing aborted'
+
+export const ABORT_ERROR = 'AbortError'
+
+export const DOM_EXCEPTION = (message) => new DOMException(message, ABORT_ERROR)

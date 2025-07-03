@@ -8,7 +8,8 @@ export default function transformMatches(result, data) {
     return
   }
 
-  matches.forEach((match) => {
+  for (let i = 0, len = matches.length; i < len; i += 1) {
+    const match = matches[i]
     if (!isDefined(match.indices) || !match.indices.length) {
       return
     }
@@ -29,5 +30,5 @@ export default function transformMatches(result, data) {
     }
 
     data.matches.push(obj)
-  })
+  }
 }

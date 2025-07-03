@@ -45,7 +45,7 @@ export function parse(query, options, { auto = true } = {}) {
       const pattern = isQueryPath ? query[KeyType.PATTERN] : query[key]
 
       if (!isString(pattern)) {
-        throw new Error(ErrorMsg.LOGICAL_SEARCH_INVALID_QUERY_FOR_KEY(key))
+        throw ErrorMsg.DOM_EXCEPTION(ErrorMsg.LOGICAL_SEARCH_INVALID_QUERY_FOR_KEY(key))
       }
 
       const obj = {
@@ -65,15 +65,17 @@ export function parse(query, options, { auto = true } = {}) {
       operator: keys[0]
     }
 
-    keys.forEach((key) => {
+    for (let i = 1, len = keys.length; i < len; i += 1) {
+      const key = keys[i]
       const value = query[key]
 
       if (isArray(value)) {
-        value.forEach((item) => {
+        for (let j = 0, lenJ = value.length; j < lenJ; j += 1) {
+          const item = value[j]
           node.children.push(next(item))
-        })
+        }
       }
-    })
+    }
 
     return node
   }
